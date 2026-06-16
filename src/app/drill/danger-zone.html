@@ -1,0 +1,47 @@
+<button
+  type="button"
+  (click)="open()"
+  class="font-mono text-xs text-neutral-500 underline-offset-4 transition-colors hover:text-neutral-300 hover:underline motion-reduce:transition-none"
+>
+  Reset progress
+</button>
+
+<dialog
+  #dialog
+  class="m-auto w-full max-w-md rounded border border-neutral-800 bg-neutral-900 p-6 text-neutral-100 backdrop:bg-neutral-950/70"
+>
+  <div class="flex flex-col gap-4">
+    <h2 class="font-mono text-sm uppercase tracking-widest text-neutral-200">Reset progress?</h2>
+    <p class="text-sm text-neutral-400">
+      This clears your drill progress and resets your level. Your resume and Claude API key are
+      kept. This cannot be undone.
+    </p>
+
+    <div class="flex items-center justify-between gap-4">
+      <button
+        type="button"
+        (click)="confirmAll()"
+        class="whitespace-nowrap font-mono text-xs text-weak underline underline-offset-4 transition-colors hover:opacity-80 motion-reduce:transition-none"
+      >
+        Delete everything
+      </button>
+
+      <div class="flex gap-2">
+        <button
+          type="button"
+          (click)="cancel()"
+          class="rounded border border-neutral-700 px-3 py-1.5 font-mono text-xs text-neutral-300 hover:border-neutral-500"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="confirmProgress()"
+          class="rounded bg-accent px-3 py-1.5 font-mono text-xs text-neutral-950 hover:opacity-90"
+        >
+          Reset progress
+        </button>
+      </div>
+    </div>
+  </div>
+</dialog>

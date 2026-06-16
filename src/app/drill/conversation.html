@@ -1,0 +1,34 @@
+<ol class="flex flex-col gap-4">
+  @for (m of messages(); track m.id) {
+    <li>
+      @switch (m.role) {
+        @case ('topic') {
+          <p class="font-mono text-xs uppercase tracking-widest text-neutral-500">{{ m.text }}</p>
+        }
+        @case ('assistant') {
+          <p class="text-neutral-100">{{ m.text }}</p>
+        }
+        @case ('user') {
+          <p class="rounded bg-neutral-900 p-3 text-neutral-300">{{ m.text }}</p>
+        }
+        @case ('feedback') {
+          @if (m.result; as r) {
+            <div class="flex flex-col gap-2 rounded border border-neutral-800 p-3">
+              <p class="font-mono text-sm">score: {{ r.score }}/10</p>
+              @if (r.strengths.length) {
+                <p class="text-sm text-strong">+ {{ r.strengths.join('; ') }}</p>
+              }
+              @if (r.weaknesses.length) {
+                <p class="text-sm text-weak">− {{ r.weaknesses.join('; ') }}</p>
+              }
+              <p class="text-sm text-neutral-400">{{ r.articulationNote }}</p>
+              @if (r.teaching) {
+                <p class="rounded bg-neutral-900 p-3 text-sm text-neutral-200">{{ r.teaching }}</p>
+              }
+            </div>
+          }
+        }
+      }
+    </li>
+  }
+</ol>

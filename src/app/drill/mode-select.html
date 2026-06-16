@@ -1,0 +1,29 @@
+<div class="flex flex-col gap-4">
+  <h2 class="font-mono text-lg tracking-tight">Choose your mode</h2>
+  <div class="grid grid-cols-2 gap-4">
+    <button
+      type="button"
+      class="flex flex-col items-start gap-2 rounded-lg border p-5 text-left transition-colors
+             hover:border-accent motion-reduce:transition-none"
+      [class.border-accent]="selected() === 'interview'"
+      [class.border-neutral-700]="selected() !== 'interview'"
+      [attr.aria-pressed]="selected() === 'interview'"
+      (click)="pick('interview')"
+    >
+      <span class="font-mono text-base" [class.text-accent]="selected() === 'interview'">Interview</span>
+      <span class="text-sm text-neutral-400">Realistic screen. Light teaching; deep debrief after.</span>
+    </button>
+    <button
+      type="button"
+      class="flex flex-col items-start gap-2 rounded-lg border p-5 text-left transition-colors
+             hover:border-accent motion-reduce:transition-none"
+      [class.border-accent]="selected() === 'improve'"
+      [class.border-neutral-700]="selected() !== 'improve'"
+      [attr.aria-pressed]="selected() === 'improve'"
+      (click)="pick('improve')"
+    >
+      <span class="font-mono text-base" [class.text-accent]="selected() === 'improve'">Improve</span>
+      <span class="text-sm text-neutral-400">Tutor mode. Teaching on weak answers; leans on weak topics.</span>
+    </button>
+  </div>
+</div>

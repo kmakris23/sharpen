@@ -1,0 +1,47 @@
+@if (session.profile(); as p) {
+  <div class="mx-auto flex max-w-md flex-col items-center gap-5 py-16 text-center">
+    <p class="font-mono text-xs uppercase tracking-widest text-neutral-500">resume on file</p>
+    <p class="font-mono text-base">{{ session.resumeName() || 'your resume' }}</p>
+    <p class="text-sm text-neutral-400">{{ p.summary }}</p>
+
+    @if (!llm.hasKey()) {
+      <label class="flex w-full flex-col gap-1 text-left">
+        <span class="font-mono text-xs uppercase tracking-widest text-neutral-500">Claude API key</span>
+        <input
+          type="password"
+          autocomplete="off"
+          placeholder="sk-ant-…"
+          class="rounded bg-neutral-900 p-2 font-mono text-sm text-neutral-100"
+          [value]="llm.key()"
+          (input)="onKey($event)"
+        />
+      </label>
+    }
+
+    <div class="flex gap-3">
+      <button
+        type="button"
+        class="rounded bg-accent px-4 py-2 font-mono text-sm text-neutral-950 disabled:opacity-40"
+        [disabled]="!llm.hasKey()"
+        (click)="session.continueWithSavedResume()"
+      >
+        Continue →
+      </button>
+      <button
+        type="button"
+        class="rounded border border-neutral-700 px-4 py-2 font-mono text-sm text-neutral-300"
+        (click)="session.clearResume()"
+      >
+        Replace résumé
+      </button>
+    </div>
+  </div>
+} @else {
+  <app-upload-pane
+    [key]="llm.key()"
+    [error]="session.error()"
+    [loading]="session.phaseName() === 'parsing'"
+    (keyChange)="llm.setKey($event)"
+    (fileSelected)="session.onFileSelected($event)"
+  />
+}

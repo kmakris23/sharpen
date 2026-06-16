@@ -1,0 +1,92 @@
+<div class="flex min-h-0 flex-1 flex-col gap-6">
+  <!-- Level header -->
+  <div class="flex flex-col gap-1">
+    <p class="font-mono text-xs uppercase tracking-widest text-neutral-500">level</p>
+    <p
+      class="font-mono text-lg"
+      [class.text-neutral-500]="overall().calibrating"
+      [class.italic]="overall().estimate"
+    >
+      {{ overall().label }}
+      @if (overall().estimate) {
+        <app-est-badge />
+      }
+    </p>
+    @if (!overall().calibrating) {
+      <div class="h-1 w-full rounded bg-neutral-800">
+        <div
+          class="h-1 rounded bg-accent transition-all duration-500 motion-reduce:transition-none"
+          [style.width.%]="overall().pct"
+        ></div>
+      </div>
+      <p class="text-xs text-neutral-500">{{ overall().pct }}% to next</p>
+    }
+  </div>
+
+  <!-- Per-category levels -->
+  <div class="flex flex-col gap-2">
+    <p class="font-mono text-xs uppercase tracking-widest text-neutral-500">by category</p>
+    @for (c of categories(); track c.cat) {
+      <div class="flex justify-between text-sm">
+        <span class="text-neutral-400">{{ c.cat }}</span>
+        <span class="font-mono" [class.text-neutral-600]="c.calibrating" [class.italic]="c.estimate">
+          {{ c.label }}
+          @if (c.estimate) {
+            <app-est-badge />
+          }
+        </span>
+      </div>
+    } @empty {
+      <p class="text-xs text-neutral-500">No categories yet — parse a resume to begin.</p>
+    }
+  </div>
+
+  <!-- Topic score bars -->
+  <div class="flex min-h-0 flex-1 flex-col gap-3">
+    <p class="font-mono text-xs uppercase tracking-widest text-neutral-500">topics</p>
+    <div class="topic-scroll flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-2">
+      @for (b of bars(); track b.topic) {
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-between text-xs">
+            <span class="flex items-center gap-1 text-neutral-400">
+              {{ b.topic }}
+              @if (b.subtopics.length) {
+                <!-- Info icon: hover/focus reveals the resume-evidenced angles for this topic
+                     (reference only — questions aren't limited to them). The popover itself is a
+                     single fixed element below, so it can't get clipped by the scrolling list. -->
+                <span
+                  tabindex="0"
+                  [appPopover]="b.subtopics"
+                  popoverTitle="Some subtopics we found"
+                  class="group inline-flex cursor-help items-center"
+                >
+                  <svg
+                    viewBox="0 0 16 16"
+                    aria-label="Subtopics found in your résumé"
+                    class="h-3.5 w-3.5 text-neutral-600 group-hover:text-neutral-400 group-focus:text-neutral-400"
+                  >
+                    <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.3" />
+                    <circle cx="8" cy="4.5" r="0.95" fill="currentColor" />
+                    <rect x="7.2" y="6.6" width="1.6" height="5" rx="0.8" fill="currentColor" />
+                  </svg>
+                </span>
+              }
+            </span>
+            <span class="font-mono text-neutral-500">{{ b.score }}</span>
+          </div>
+          <div class="h-2 w-full rounded bg-neutral-800">
+            <div
+              class="h-2 rounded transition-all duration-500 motion-reduce:transition-none"
+              [class.bg-weak]="b.tone === 'weak'"
+              [class.bg-mid]="b.tone === 'mid'"
+              [class.bg-strong]="b.tone === 'strong'"
+              [style.width.%]="b.score * 10"
+            ></div>
+          </div>
+        </div>
+      } @empty {
+        <p class="text-xs text-neutral-500">No topics yet — parse a resume to begin.</p>
+      }
+    </div>
+  </div>
+</div>

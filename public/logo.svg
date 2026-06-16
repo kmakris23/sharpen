@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 180" width="640" height="180" role="img" aria-label="sharpen">
+  <title>sharpen</title>
+  <rect width="640" height="180" rx="18" fill="#0a0a0a"/>
+  <g font-family="'JetBrains Mono','Cascadia Code',ui-monospace,SFMono-Regular,monospace" font-weight="700" font-size="84">
+    <!-- terminal prompt caret -->
+    <text x="58" y="118" fill="#9a5a2c">&gt;</text>
+    <!-- wordmark -->
+    <text x="132" y="118" fill="#ea7a3c" letter-spacing="-1">sharpen</text>
+    <!-- blinking cursor block -->
+    <rect x="494" y="54" width="42" height="66" fill="#ea7a3c">
+      <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.5;0.5;1" dur="1.1s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+</svg>

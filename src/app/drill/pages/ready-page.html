@@ -1,0 +1,3 @@
+@if (session.mode(); as m) {
+  <app-start-gate [mode]="m" [canStart]="llm.hasKey()" (start)="session.onStart()" />
+}

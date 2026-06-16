@@ -1,0 +1,60 @@
+<div class="mx-auto flex max-w-md flex-col items-center gap-6 py-16 text-center">
+  <h2 class="font-mono text-xl tracking-tight">Drill yourself sharp.</h2>
+  <p class="text-sm text-neutral-400">
+    Upload your resume to start an adaptive technical drill.
+  </p>
+
+  <label
+    class="flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed
+           border-neutral-700 p-10 transition-colors hover:border-accent motion-reduce:transition-none"
+    [class.border-accent]="staged()"
+    (dragover)="$event.preventDefault()"
+    (drop)="onDrop($event)"
+  >
+    @if (staged(); as f) {
+      <span class="font-mono text-sm text-neutral-100">{{ f.name }}</span>
+      <span class="text-xs text-neutral-500">click to choose a different file</span>
+    } @else {
+      <span class="font-mono text-sm text-neutral-300">drop resume here, or click to choose</span>
+      <span class="text-xs text-neutral-500">PDF, DOCX, or text</span>
+    }
+    <input type="file" class="hidden" (change)="onFileInput($event)" />
+  </label>
+
+  @if (error()) {
+    <p class="text-sm text-weak">{{ error() }}</p>
+  }
+
+  <label class="flex w-full flex-col gap-1 text-left">
+    <span class="font-mono text-xs uppercase tracking-widest text-neutral-500">Claude API key</span>
+    <input
+      type="password"
+      autocomplete="off"
+      placeholder="sk-ant-…"
+      class="rounded bg-neutral-900 p-2 font-mono text-sm text-neutral-100"
+      [value]="key()"
+      (input)="onKeyInput($event)"
+    />
+    <span class="text-xs text-neutral-500">
+      Stored only in this browser. Needed to ask &amp; score questions.
+    </span>
+  </label>
+
+  <button
+    type="button"
+    class="flex w-full items-center justify-center gap-2 rounded bg-accent px-4 py-2 font-mono
+           text-sm text-neutral-950 disabled:opacity-40"
+    [disabled]="!canContinue()"
+    (click)="continue()"
+  >
+    @if (loading()) {
+      <span
+        class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-neutral-950/40 border-t-neutral-950"
+        aria-hidden="true"
+      ></span>
+      Parsing résumé…
+    } @else {
+      Continue →
+    }
+  </button>
+</div>

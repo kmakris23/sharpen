@@ -1,0 +1,29 @@
+<section class="flex flex-col gap-4">
+  <!-- Keyed on the cycle id so the fade-in replays per question, not per phase. -->
+  @for (key of [session.cycleKey()]; track key) {
+    <div class="flex animate-fade-in flex-col gap-4">
+      <app-conversation [messages]="session.currentMessages()" />
+
+      @switch (session.phaseName()) {
+        @case ('asking') {
+          <app-loading-indicator label="Generating your next question…" />
+        }
+        @case ('answering') {
+          <app-answer-input [enabled]="session.inputEnabled()" (send)="session.onAnswer($event)" />
+        }
+        @case ('scoring') {
+          <app-loading-indicator label="Scoring your answer…" />
+        }
+        @case ('feedback') {
+          <button
+            type="button"
+            class="self-start rounded bg-accent px-4 py-2 font-mono text-sm text-neutral-950"
+            (click)="session.onNext()"
+          >
+            Next question →
+          </button>
+        }
+      }
+    </div>
+  }
+</section>

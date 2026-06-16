@@ -1,0 +1,25 @@
+<nav aria-label="Progress" class="flex items-center gap-2 font-mono text-xs">
+  @for (s of steps(); track s.path; let last = $last) {
+    @if (s.clickable) {
+      <button
+        type="button"
+        (click)="go(s.path)"
+        class="rounded px-1 text-neutral-400 transition-colors hover:text-accent motion-reduce:transition-none"
+      >
+        {{ s.label }}
+      </button>
+    } @else {
+      <span
+        class="px-1"
+        [class.text-accent]="s.active"
+        [class.text-neutral-600]="!s.active"
+        [attr.aria-current]="s.active ? 'step' : null"
+      >
+        {{ s.label }}
+      </span>
+    }
+    @if (!last) {
+      <span class="text-neutral-700" aria-hidden="true">›</span>
+    }
+  }
+</nav>

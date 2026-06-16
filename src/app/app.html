@@ -1,0 +1,24 @@
+<div class="flex h-screen flex-col overflow-hidden">
+  <header class="flex items-center justify-between border-b border-neutral-800 px-6 py-4">
+    <h1 class="font-mono text-lg tracking-tight text-accent">{{ title() }}</h1>
+    @if (session.profile()) {
+      <span class="font-mono text-xs text-neutral-500">
+        resume: {{ session.resumeName() || 'loaded' }}
+      </span>
+    }
+  </header>
+
+  <div class="flex flex-1 overflow-hidden">
+    <main class="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
+      <app-breadcrumb />
+      <router-outlet />
+    </main>
+
+    <aside class="flex w-80 flex-col overflow-hidden border-l border-neutral-800 p-6">
+      <app-mastery-panel />
+      <div class="mt-6 border-t border-neutral-800 pt-6">
+        <app-danger-zone />
+      </div>
+    </aside>
+  </div>
+</div>
