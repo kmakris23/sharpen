@@ -44,7 +44,11 @@ describe('updateMastery', () => {
       topic: 'Angular', cat: 'frontend', rollingScore: 0, timesSeen: 0,
       lastAskedAtQ: 0, resurfaceAfterQ: 0, subtopics: ['SignalR', 'RxJS'],
     };
-    expect(updateMastery(seeded, 'Angular', 'frontend', 8, 1).subtopics).toEqual(['SignalR', 'RxJS']);
+    const first = updateMastery(seeded, 'Angular', 'frontend', 8, 1);
+    expect(first.subtopics).toEqual(['SignalR', 'RxJS']);
+    // A seeded row (timesSeen 0) carries no real prior, so the first answer seeds the
+    // score outright (8) rather than blending against the placeholder 0 (which gave 3.2).
+    expect(first.rollingScore).toBe(8);
     // No prior subtopics -> field stays absent.
     expect(updateMastery(null, 'Go', 'backend', 8, 1)).not.toHaveProperty('subtopics');
   });

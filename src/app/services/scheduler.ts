@@ -61,7 +61,11 @@ export function updateMastery(
   questionsAsked: number,
 ): MasteryRow {
   const timesSeen = (prev?.timesSeen ?? 0) + 1;
-  const rolling = prev == null ? score : prev.rollingScore * 0.6 + score * 0.4;
+  // A seeded row (timesSeen 0) carries no answered data — its rollingScore 0 is a
+  // placeholder, not a real prior — so the FIRST real answer seeds the score outright
+  // rather than blending against 0 (which would damp it to 40% and barely move the bar).
+  const hasPrior = prev != null && prev.timesSeen > 0;
+  const rolling = hasPrior ? prev.rollingScore * 0.6 + score * 0.4 : score;
   const rollingScore = round1(clamp(rolling, 0, 10));
   // weak -> resurface soon (~2 questions); strong -> later (~10).
   const resurfaceAfterQ = Math.round(2 + (rollingScore / 10) * 8);
