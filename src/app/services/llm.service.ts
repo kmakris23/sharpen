@@ -48,9 +48,19 @@ const SCORE_SCHEMA = {
     strengths: { type: 'array', items: { type: 'string' } },
     weaknesses: { type: 'array', items: { type: 'string' } },
     articulationNote: { type: 'string' },
+    oneLiner: { type: 'string' },
+    termsThatScore: { type: 'array', items: { type: 'string' } },
     teaching: { type: ['string', 'null'] },
   },
-  required: ['score', 'strengths', 'weaknesses', 'articulationNote', 'teaching'],
+  required: [
+    'score',
+    'strengths',
+    'weaknesses',
+    'articulationNote',
+    'oneLiner',
+    'termsThatScore',
+    'teaching',
+  ],
 };
 
 // parseResume: extract the drill topics + their category groupings FROM the resume
@@ -300,6 +310,8 @@ function parseScore(text: string, mode: Mode): ScoreResult {
       strengths: toStringArray(raw['strengths']),
       weaknesses: toStringArray(raw['weaknesses']),
       articulationNote: typeof raw['articulationNote'] === 'string' ? raw['articulationNote'] : '',
+      oneLiner: typeof raw['oneLiner'] === 'string' ? (raw['oneLiner'] as string) : '',
+      termsThatScore: toStringArray(raw['termsThatScore']),
       teaching: typeof raw['teaching'] === 'string' ? (raw['teaching'] as string) : null,
     };
     // Enforce the teaching rule client-side regardless of what the model returned.
@@ -311,7 +323,15 @@ function parseScore(text: string, mode: Mode): ScoreResult {
 }
 
 function fallbackScore(note: string): ScoreResult {
-  return { score: 0, strengths: [], weaknesses: [], articulationNote: note, teaching: null };
+  return {
+    score: 0,
+    strengths: [],
+    weaknesses: [],
+    articulationNote: note,
+    oneLiner: '',
+    termsThatScore: [],
+    teaching: null,
+  };
 }
 
 function parseProfile(text: string): Profile {

@@ -2,26 +2,29 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { type ChatMessage, type DrillTopic, type Mode, Phase, type Profile } from '../models/types';
 import { ALLOWED_NEXT } from '../drill/phase-machine';
+import { DrillStore } from './drill-store';
 import { LlmService } from './llm.service';
 import { MasteryStore } from './mastery.store';
 import { ResumeStore } from './resume-store';
 import { pickNextTopic, updateMastery } from './scheduler';
 
 // Mode persists alongside the resume so a reload keeps you on /mode or /ready
-// instead of bouncing to LANDING. (Mid-drill restore is intentionally not handled
-// yet — see DrillPage, which sends a /drill reload back to /ready.)
+// instead of bouncing to LANDING. The in-flight drill itself persists via DrillStore,
+// so a reload restores the exact /drill/:n screen (see init -> restoreDrill).
 const MODE_STORAGE = 'sharpen.mode';
 
-// Holds the ephemeral drill session state + orchestration. Lives outside the
-// routed page components (which are created/destroyed on navigation) so they all
-// share one source of truth. Navigates between the "real" screens (/, /mode,
-// /ready, /drill); the transient phases (parsing/asking/scoring/feedback) play out
-// inside /drill via the `phase` signal. Mastery state lives in MasteryStore.
+// Holds the drill session state + orchestration. Lives outside the routed page
+// components (which are created/destroyed on navigation) so they all share one source
+// of truth. Navigates between the "real" screens (/, /mode, /ready) and a per-question
+// /drill/:n URL; the transient phases (parsing/asking/scoring/feedback) play out inside
+// the drill page via the `phase` signal. Mastery persists in MasteryStore; the in-flight
+// drill (transcript + current question) persists in DrillStore for reload recovery.
 @Injectable({ providedIn: 'root' })
 export class DrillSession {
   private readonly llm = inject(LlmService);
   private readonly store = inject(MasteryStore);
   private readonly resume = inject(ResumeStore);
+  private readonly drill = inject(DrillStore);
   private readonly router = inject(Router);
   private nextId = 0;
   private readonly askedTexts: string[] = [];
@@ -33,6 +36,9 @@ export class DrillSession {
   readonly messages = signal<ChatMessage[]>([]);
   readonly currentTopic = signal<DrillTopic | null>(null);
   readonly currentQuestion = signal<string>('');
+  // 1-based index of the question currently being drilled THIS session (0 before the
+  // first). The drill is open-ended; this is just a progress counter, not a cap.
+  readonly questionNumber = signal<number>(0);
   readonly error = signal<string>('');
 
   // THE INPUT RULE: input enabled only in the Answering phase.
@@ -78,6 +84,10 @@ export class DrillSession {
       const mode = this.loadMode();
       if (mode) this.mode.set(mode); // restore so /ready survives a reload
     }
+    // Restore an in-flight drill (transcript + which question) so a reload lands back
+    // on the exact /drill/:n screen. Only when a drill is actually possible (resume +
+    // mode); the snapshot is always at a stable phase, so this is a pure render.
+    if (this.canDrill()) this.restoreDrill();
     // Load persisted mastery first, then (re)seed the saved resume's topics so the
     // panel shows them even if seeding never persisted (defensive; seed is additive).
     void this.store.load().then(() => (saved ? this.store.seed(saved.profile.topics) : undefined));
@@ -121,7 +131,9 @@ export class DrillSession {
     this.messages.set([]);
     this.currentTopic.set(null);
     this.currentQuestion.set('');
+    this.questionNumber.set(0);
     this.askedTexts.length = 0;
+    this.drill.clear();
     this.error.set('');
     this.phase.set(Phase.Landing);
     await this.router.navigate(['/']);
@@ -139,7 +151,9 @@ export class DrillSession {
     this.messages.set([]);
     this.currentTopic.set(null);
     this.currentQuestion.set('');
+    this.questionNumber.set(0);
     this.askedTexts.length = 0;
+    this.drill.clear();
     this.error.set('');
     if (this.canDrill()) {
       this.phase.set(Phase.Ready);
@@ -168,8 +182,10 @@ export class DrillSession {
     this.messages.set([]);
     this.currentTopic.set(null);
     this.currentQuestion.set('');
+    this.questionNumber.set(0);
     this.error.set('');
     this.askedTexts.length = 0;
+    this.drill.clear();
     this.phase.set(Phase.Landing);
     await this.router.navigate(['/']);
   }
@@ -221,10 +237,9 @@ export class DrillSession {
     await this.router.navigate(['/ready']);
   }
 
-  /** READY: Start -> navigate to /drill and ask the first question. */
+  /** READY: Start -> ask the first question (askNext navigates to /drill/1). */
   async onStart(): Promise<void> {
     this.advance(); // Ready -> Asking
-    await this.router.navigate(['/drill']);
     await this.askNext();
   }
 
@@ -245,6 +260,7 @@ export class DrillSession {
     await this.store.put(row);
 
     this.advance(); // Scoring -> Feedback
+    this.persist(); // stable snapshot: answer scored, feedback shown
   }
 
   /** FEEDBACK (within /drill): Next question -> back to ASKING. */
@@ -260,7 +276,12 @@ export class DrillSession {
 
     const topic = pickNextTopic(this.store.rows(), profile.topics, mode, this.questionsAsked());
     this.currentTopic.set(topic);
+    const n = this.questionNumber() + 1; // advance the session progress counter
+    this.questionNumber.set(n);
     this.addMessage('topic', topic.topic);
+    // Each question gets its own URL (/drill/:n). Navigated up front (before the async
+    // generation) so the "Generating…" indicator shows on the drill screen, not /ready.
+    await this.router.navigate(['/drill', n]);
 
     let question: string;
     try {
@@ -279,6 +300,33 @@ export class DrillSession {
     this.addMessage('assistant', question);
 
     this.advance(); // Asking -> Answering
+    this.persist(); // stable snapshot: question shown, awaiting an answer
+  }
+
+  /** Write the in-flight drill to storage. Called only at stable phases (see DrillStore). */
+  private persist(): void {
+    this.drill.save({
+      messages: this.messages(),
+      currentTopic: this.currentTopic(),
+      currentQuestion: this.currentQuestion(),
+      questionNumber: this.questionNumber(),
+      phase: this.phase(),
+      askedTexts: [...this.askedTexts],
+    });
+  }
+
+  /** Restore a saved in-flight drill into the session signals (no navigation, no async). */
+  private restoreDrill(): void {
+    const snap = this.drill.load();
+    if (!snap) return;
+    this.messages.set(snap.messages);
+    this.currentTopic.set(snap.currentTopic);
+    this.currentQuestion.set(snap.currentQuestion);
+    this.questionNumber.set(snap.questionNumber);
+    this.askedTexts.push(...snap.askedTexts);
+    // Resume the id counter past the restored messages so new ids don't collide.
+    this.nextId = snap.messages.reduce((max, m) => Math.max(max, Number(m.id) || 0), 0);
+    this.phase.set(snap.phase);
   }
 
   private advance(): void {

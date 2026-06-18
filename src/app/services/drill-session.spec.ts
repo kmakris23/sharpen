@@ -18,7 +18,7 @@ const FIXTURE_TOPICS: readonly DrillTopic[] = [
 class FakeLlm {
   hasKeyValue = true;
   parseThrows = false;
-  score: ScoreResult = { score: 7, strengths: ['clear'], weaknesses: [], articulationNote: 'x', teaching: null };
+  score: ScoreResult = { score: 7, strengths: ['clear'], weaknesses: [], articulationNote: 'x', oneLiner: '', termsThatScore: [], teaching: null };
   async parseResume(): Promise<Profile> {
     if (this.parseThrows) throw new Error('Unsupported file');
     return { summary: 's', topics: FIXTURE_TOPICS.map((t) => ({ ...t })), resumeLevel: 3 };
@@ -134,7 +134,48 @@ describe('DrillSession', () => {
     await s.onNext();
     expect(s.phase()).toBe(Phase.Answering);
 
-    expect(router.calls).toEqual(['/mode', '/ready', '/drill']);
+    // Each question gets its own URL: Q1 -> /drill/1, Q2 -> /drill/2.
+    expect(router.calls).toEqual(['/mode', '/ready', '/drill/1', '/drill/2']);
+  });
+
+  it('restores an in-flight drill on reload so progress is not lost', async () => {
+    const s = session();
+    await s.onFileSelected(new File(['cv'], 'jane.pdf'));
+    await s.onModePicked('improve');
+    await s.onStart(); // Q1 asked -> snapshot at Answering
+    await s.onAnswer('my answer'); // Q1 scored -> snapshot at Feedback
+    expect(s.questionNumber()).toBe(1);
+    expect(s.phase()).toBe(Phase.Feedback);
+
+    // Simulate a reload: a brand-new session with the same persisted resume/mode/drill.
+    // (localStorage survives the TestBed reset, mirroring a real page refresh.)
+    TestBed.resetTestingModule();
+    const reloaded = session();
+    resume.saved = { profile: { summary: 's', topics: FIXTURE_TOPICS.map((t) => ({ ...t })), resumeLevel: 3 }, name: 'jane.pdf' };
+    reloaded.init();
+
+    expect(reloaded.questionNumber()).toBe(1); // back on the same question
+    expect(reloaded.phase()).toBe(Phase.Feedback); // at the same stable phase
+    expect(reloaded.currentQuestion()).toBe('What is X?');
+    expect(reloaded.messages().some((m) => m.role === 'feedback')).toBe(true); // transcript restored
+  });
+
+  it('counts questions per drill session and resets the counter on resetProgress', async () => {
+    const s = session();
+    expect(s.questionNumber()).toBe(0); // nothing asked yet
+
+    await s.onFileSelected(new File(['cv'], 'jane.pdf'));
+    await s.onModePicked('improve');
+
+    await s.onStart(); // Q1
+    expect(s.questionNumber()).toBe(1);
+
+    await s.onAnswer('a1');
+    await s.onNext(); // Q2
+    expect(s.questionNumber()).toBe(2);
+
+    await s.resetProgress();
+    expect(s.questionNumber()).toBe(0); // progress wiped
   });
 
   it('shows only the current question cycle (one at a time), not the whole transcript', async () => {

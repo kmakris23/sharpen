@@ -19,7 +19,7 @@ describe('Conversation', () => {
     expect(el.textContent).toContain('It checks bindings.');
   });
 
-  it('renders a feedback result with score, lists, and teaching', () => {
+  it('renders a feedback result with score, lists, one-liner, terms, and teaching', () => {
     const el = render([
       {
         id: '3',
@@ -29,6 +29,8 @@ describe('Conversation', () => {
           strengths: ['mentioned zones'],
           weaknesses: ['missed OnPush'],
           articulationNote: 'be precise',
+          oneLiner: 'OnPush turns the component into a pure function of its inputs',
+          termsThatScore: ['OnPush', 'reference equality', 'markForCheck'],
           teaching: 'OnPush skips subtrees…',
         },
       },
@@ -36,6 +38,8 @@ describe('Conversation', () => {
     expect(el.textContent).toContain('4/10');
     expect(el.textContent).toContain('mentioned zones');
     expect(el.textContent).toContain('missed OnPush');
+    expect(el.textContent).toContain('pure function of its inputs');
+    expect(el.textContent).toContain('markForCheck');
     expect(el.textContent).toContain('OnPush skips subtrees');
   });
 });

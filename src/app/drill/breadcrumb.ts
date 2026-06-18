@@ -37,7 +37,8 @@ export class Breadcrumb {
 
   protected readonly steps = computed(() => {
     const current = this.url().split(/[?#]/)[0] || '/';
-    const idx = STEPS.findIndex((s) => s.path === current);
+    // Drill questions are /drill/:n — match the Drill step on its prefix, others exactly.
+    const idx = STEPS.findIndex((s) => current === s.path || current.startsWith(s.path + '/'));
     const currentIndex = idx === -1 ? 0 : idx;
     const mode = this.session.mode();
     return STEPS.map((s, i) => ({

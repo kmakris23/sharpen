@@ -44,10 +44,12 @@ export interface Profile {
 
 export interface ScoreResult {
   score: number; // 0–10
-  strengths: string[];
-  weaknesses: string[];
+  strengths: string[]; // what the candidate got right (anchor on the correct instinct)
+  weaknesses: string[]; // "tighten this" notes — each names the precise senior term that was missed/loose
   articulationNote: string; // precision-of-wording feedback
-  teaching: string | null; // populated only when weak AND mode === 'improve'
+  oneLiner: string; // the memorizable "senior one-liner" — the compressed gold answer; always present
+  termsThatScore: string[]; // vocabulary an interviewer listens for on this question; always present
+  teaching: string | null; // full from-first-principles; populated only when weak AND mode === 'improve'
 }
 
 // THE core persisted entity -> maps to a future topic_mastery table.

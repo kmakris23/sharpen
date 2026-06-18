@@ -18,6 +18,9 @@ export const routes: Routes = [
   { path: '', component: LandingPage },
   { path: 'mode', component: ModePage, canActivate: [hasProfile] },
   { path: 'ready', component: ReadyPage, canActivate: [canDrill] },
-  { path: 'drill', component: DrillPage, canActivate: [canDrill] },
+  // Each question has its own URL (/drill/:n) so a reload restores the exact screen.
+  // Bare /drill has no question to show — bounce to the Start gate (which guards the session).
+  { path: 'drill', redirectTo: 'ready', pathMatch: 'full' },
+  { path: 'drill/:n', component: DrillPage, canActivate: [canDrill] },
   { path: '**', redirectTo: '' },
 ];

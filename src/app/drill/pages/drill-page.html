@@ -1,4 +1,10 @@
 <section class="flex flex-col gap-4">
+  @if (session.questionNumber() > 0) {
+    <p class="font-mono text-xs uppercase tracking-widest text-neutral-500">
+      Question {{ session.questionNumber() }}
+    </p>
+  }
+
   <!-- Keyed on the cycle id so the fade-in replays per question, not per phase. -->
   @for (key of [session.cycleKey()]; track key) {
     <div class="flex animate-fade-in flex-col gap-4">

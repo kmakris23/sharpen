@@ -1,5 +1,5 @@
 import { Component, type OnInit, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Phase } from '../../models/types';
 import { DrillSession } from '../../services/drill-session';
 import { AnswerInput } from '../answer-input';
@@ -19,13 +19,20 @@ const DRILL_PHASES = [Phase.Asking, Phase.Answering, Phase.Scoring, Phase.Feedba
 export class DrillPage implements OnInit {
   protected readonly session = inject(DrillSession);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   ngOnInit(): void {
-    // On a real reload the session resets to LANDING (mid-drill restore isn't built
-    // yet) — fall back to /ready rather than show a blank drill. During the normal
-    // start flow the phase is already a drill phase, so we stay put.
+    // On reload, the session restores an in-flight drill (DrillSession.init) into a
+    // drill phase. With nothing to restore we land here outside a drill phase — fall
+    // back to /ready rather than show a blank drill.
     if (!DRILL_PHASES.includes(this.session.phase())) {
       void this.router.navigate(['/ready']);
+      return;
     }
+    // Keep the URL honest: if the path's :n doesn't match the restored question
+    // (e.g. a reload caught mid-generation, or a hand-edited URL), correct it.
+    const n = this.session.questionNumber();
+    const param = Number(this.route.snapshot.paramMap.get('n'));
+    if (n > 0 && param !== n) void this.router.navigate(['/drill', n]);
   }
 }

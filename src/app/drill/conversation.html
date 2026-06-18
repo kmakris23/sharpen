@@ -22,6 +22,18 @@
                 <p class="text-sm text-weak">− {{ r.weaknesses.join('; ') }}</p>
               }
               <p class="text-sm text-neutral-400">{{ r.articulationNote }}</p>
+              @if (r.oneLiner) {
+                <p class="rounded border-l-2 border-accent bg-neutral-900 p-3 text-sm text-neutral-100">
+                  <span class="font-mono text-xs uppercase tracking-widest text-neutral-500">say this</span><br />
+                  {{ r.oneLiner }}
+                </p>
+              }
+              @if (r.termsThatScore.length) {
+                <p class="text-xs text-neutral-400">
+                  <span class="font-mono uppercase tracking-widest text-neutral-500">terms that score:</span>
+                  {{ r.termsThatScore.join(' · ') }}
+                </p>
+              }
               @if (r.teaching) {
                 <p class="rounded bg-neutral-900 p-3 text-sm text-neutral-200">{{ r.teaching }}</p>
               }

@@ -92,6 +92,26 @@ describe('LlmService.scoreAnswer', () => {
     expect(r.articulationNote).toBe('tighten');
   });
 
+  it('parses the senior one-liner and the terms that score', async () => {
+    const s = llm();
+    s.response = scoreJson({
+      score: 8,
+      oneLiner: 'It is the lost update problem; use optimistic concurrency.',
+      termsThatScore: ['lost update', 'optimistic concurrency', 'rowversion'],
+    });
+    const r = await s.scoreAnswer('q', 'a', 'topic', 'improve');
+    expect(r.oneLiner).toContain('optimistic concurrency');
+    expect(r.termsThatScore).toEqual(['lost update', 'optimistic concurrency', 'rowversion']);
+  });
+
+  it('defaults one-liner/terms when the model omits them', async () => {
+    const s = llm();
+    s.response = scoreJson({ score: 6 });
+    const r = await s.scoreAnswer('q', 'a', 'topic', 'improve');
+    expect(r.oneLiner).toBe('');
+    expect(r.termsThatScore).toEqual([]);
+  });
+
   it('sends the structured-output schema', async () => {
     const s = llm();
     s.response = scoreJson({});
